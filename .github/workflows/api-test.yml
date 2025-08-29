@@ -1,0 +1,25 @@
+name: API Tests
+
+on:
+  push:
+    paths:
+      - 'API/**'
+  pull_request:
+    paths:
+      - 'API/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: API
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: npm install
+      - name: Run tests
+        run: npm test

@@ -1,15 +1,11 @@
 require('dotenv').config();
-const fs = require('fs');
 const express = require('express');
-const { InfluxDB, Point } = require('@influxdata/influxdb-client');
-const fetch = require('node-fetch'); // npm install node-fetch@2 falls noch nicht installiert
+const { InfluxDB } = require('@influxdata/influxdb-client');
+const cors = require('cors');
+const fetch = require('node-fetch');
 
 const app = express();
-const PORT = 3000;
-
 app.use(express.json());
-
-const cors = require('cors');
 app.use(cors());
 
 // InfluxDB connection setup
@@ -22,19 +18,10 @@ const bucket = process.env.INFLUX_BUCKET;
 const queryApi = influx.getQueryApi(org);
 const writeApi = influx.getWriteApi(org, bucket, 'ns');
 
-// Connection test
-queryApi.queryRows(`buckets()`, {
-  next(row, tableMeta) {
-    const o = tableMeta.toObject(row);
-    console.log('✅ Connection successful - Bucket:', o.name);
-  },
-  error(error) {
-    console.error('❌ Connection to InfluxDB failed:', error);
-  },
-  complete() {
-    console.log('✅ Connection test completed.');
-  },
-});
+// expose for tests
+app.locals.queryApi = queryApi;
+app.locals.writeApi = writeApi;
+app.locals.bucket = bucket;
 
 //  Ältester & neuster Timestamp pro Sensor
 app.get('/api/sensorRange', async (req, res) => {
@@ -559,21 +546,4 @@ app.get("/api/getLivePeaks", async (req, res) => {
 });
 
 // API Start
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`API listening on port ${PORT}`);
-});
-
-const shutdown = async () => {
-  console.log('🛑 Shutting down API service...');
-
-  try {
-    await writeApi.close();
-    console.log('✅ Influx write API closed.');
-  } catch (e) {
-    console.warn('⚠️ Error closing write API:', e.message);
-  }
-
-  process.exit(0);
-};
-
-process.on('SIGTERM', shutdown);
+module.exports = app;
