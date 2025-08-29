@@ -15,16 +15,15 @@ const influx = new InfluxDB({
 });
 const org = process.env.INFLUX_ORG;
 const bucket = process.env.INFLUX_BUCKET;
-const queryApi = influx.getQueryApi(org);
-const writeApi = influx.getWriteApi(org, bucket, 'ns');
 
 // expose for tests
-app.locals.queryApi = queryApi;
-app.locals.writeApi = writeApi;
+app.locals.queryApi = influx.getQueryApi(org);
+app.locals.writeApi = influx.getWriteApi(org, bucket, 'ns');
 app.locals.bucket = bucket;
 
 //  Ältester & neuster Timestamp pro Sensor
 app.get('/api/sensorRange', async (req, res) => {
+  const { queryApi } = req.app.locals;
   const fluxQueryOldest = `
     from(bucket: "${bucket}")
       |> range(start: 0)
@@ -63,6 +62,7 @@ app.get('/api/sensorRange', async (req, res) => {
 
 // Werte für Zeitraum abfragen
 app.post('/api/sensorRange', async (req, res) => {
+  const { queryApi } = req.app.locals;
   const { start, stop } = req.body;
   if (!start || !stop) return res.status(400).json({ error: "Bitte start und stop im Body als Timestamps angeben" });
 
@@ -109,6 +109,7 @@ app.post('/api/sensorRange', async (req, res) => {
 
 // server.ts / app.post
 app.get('/api/sensorLive', async (req, res) => {
+  const { queryApi } = req.app.locals;
   const now = new Date();
   const oneMinuteAgo = new Date(now.getTime() - 60 * 1000);
 
@@ -143,6 +144,7 @@ app.get('/api/sensorLive', async (req, res) => {
 
 // Neuestes Heatmap-Array abfragen (GET)
 app.get("/api/getArray", async (req, res) => {
+  const { queryApi } = req.app.locals;
   const fluxQuery = `
     from(bucket: "${bucket}")
       |> range(start: -30d) // oder -inf, falls du ALLE Zeiten willst
@@ -185,6 +187,7 @@ app.get("/api/getArray", async (req, res) => {
 
 // Ältester & Neuster Timestamp abrufen
 app.get("/api/getHeatmapRange", async (req, res) => {
+  const { queryApi } = req.app.locals;
   const fluxQuery = `
     from(bucket: "${bucket}")
       |> range(start: 0) 
@@ -227,6 +230,7 @@ app.get("/api/getHeatmapRange", async (req, res) => {
 
 // Heatmaps im Zeitraum abfragen (POST)
 app.post("/api/postHeatmapsRange", async (req, res) => {
+  const { queryApi } = req.app.locals;
   const { start, stop } = req.body;
 
   if (!start || !stop) {
@@ -269,6 +273,7 @@ app.post("/api/postHeatmapsRange", async (req, res) => {
 });
 
 app.get("/api/getLiveHeatmap", async (req, res) => {
+  const { queryApi } = req.app.locals;
   const now = new Date();
   const twoSecAgo = new Date(now.getTime() - 2 * 1000);
 
@@ -315,6 +320,7 @@ app.get("/api/getLiveHeatmap", async (req, res) => {
 
 // Durchschnitts-Heatmap im Zeitraum abfragen (POST)
 app.post("/api/postHeatmapAvg", async (req, res) => {
+  const { queryApi } = req.app.locals;
   const { start, stop } = req.body;
 
   if (!start || !stop) {
@@ -412,6 +418,7 @@ app.get('/api/status', async (req, res) => {
 
 // API Heatmap dekosierungs test
 app.get("/api/getAllHeatmaps", async (req, res) => {
+  const { queryApi } = req.app.locals;
   const fluxQuery = `
     from(bucket: "${bucket}")
       |> range(start: -1h)
@@ -452,6 +459,7 @@ app.get("/api/getAllHeatmaps", async (req, res) => {
 
 // API: Peaks im Zeitraum abfragen (POST)
 app.post("/api/postPeaksRange", async (req, res) => {
+  const { queryApi } = req.app.locals;
   const { start, stop } = req.body;
 
   if (!start || !stop) {
@@ -488,6 +496,7 @@ app.post("/api/postPeaksRange", async (req, res) => {
 
 // Letzte Peaks (Default, ohne Range) -> optional
 app.get("/api/getPeaks", async (req, res) => {
+  const { queryApi } = req.app.locals;
   const fluxQuery = `
     from(bucket: "${bucket}")
       |> range(start: -1h)
@@ -518,6 +527,7 @@ app.get("/api/getPeaks", async (req, res) => {
 
 // Live-Peaks abrufen
 app.get("/api/getLivePeaks", async (req, res) => {
+  const { queryApi } = req.app.locals;
   const now = new Date();
   const twoSecAgo = new Date(now.getTime() - 2000); // letzte 2 Sekunden
 
