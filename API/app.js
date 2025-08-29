@@ -64,7 +64,7 @@ app.get('/api/sensorRange', async (req, res) => {
 // Werte für Zeitraum abfragen
 app.post('/api/sensorRange', async (req, res) => {
   const { start, stop } = req.body;
-  if (!start || !stop) return res.status(400).json({ error: "Bitte start und stop im Body als Timestamps angeben" });
+  if (start == null || stop == null) return res.status(400).json({ error: "Bitte start und stop im Body als Timestamps angeben" });
 
   const fluxQuery = `
     from(bucket: "${bucket}")
@@ -454,7 +454,7 @@ app.get("/api/getAllHeatmaps", async (req, res) => {
 app.post("/api/postPeaksRange", async (req, res) => {
   const { start, stop } = req.body;
 
-  if (!start || !stop) {
+  if (start == null || stop == null) {
     return res.status(400).json({ error: "Bitte start und stop im Body als Timestamps angeben" });
   }
 
